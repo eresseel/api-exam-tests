@@ -6,7 +6,7 @@
 
     <groupId>hu.exam</groupId>
     <artifactId>api-exam-tests</artifactId>
-    <version>1.0.0-SNAPSHOT</version>
+    <version>1.0.0</version>
     <packaging>jar</packaging>
     <name>api-exam-tests</name>
 
