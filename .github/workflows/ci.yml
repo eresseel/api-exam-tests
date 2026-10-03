@@ -1,0 +1,40 @@
+name: API Tests CI
+
+on:
+  push:
+    branches: [ main, develop, 'feature/**', 'release/**', 'hotfix/**' ]
+    tags: [ 'v*.*.*' ]
+  pull_request:
+    branches: [ main, develop ]
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Verify version.txt (SemVer)
+        run: |
+          VERSION=$(tr -d '[:space:]' < version.txt)
+          echo "Version: $VERSION"
+          echo "$VERSION" | grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?$' \
+            || { echo "version.txt nem érvényes SemVer"; exit 1; }
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: maven
+
+      - name: Run tests
+        run: mvn -B clean test
+
+      - name: Upload Surefire report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: surefire-reports
+          path: target/surefire-reports/
