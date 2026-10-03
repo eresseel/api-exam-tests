@@ -1,3 +1,27 @@
+# API tesztprojekt – JSONPlaceholder /posts
+
+## Összefoglaló
+
+A projekt a JSONPlaceholder `/posts` végpontját teszteli Java 17, Maven, JUnit 5 és RestAssured segítségével, három tesztcsomaggal (TC-1.1, TC-2.1, TC-2.2, TC-3.1), a POST teszt a requestet és hiba esetén a response-t is logolja. A tesztek futtathatók IDE-ből és `mvn clean test` paranccsal, a GitHub Actions CI push-ra és manuálisan is lefut, a Surefire riportot artifactként tölti fel. Az előírt feladatok mindegyikét sikerült megvalósítani, nem maradt kihagyott elem; a fejlesztés gitflow szerint történt, a verziószám SemVer szerint a `version.txt`-ben található.
+
+---
+
+*Az alábbi szakaszok kiegészítő információk.*
+
+## Kézi ellenőrzés (curl)
+
+A tesztek előtt az API működését így ellenőriztem kézzel:
+
+```bash
+curl -i https://jsonplaceholder.typicode.com/posts/1
+curl -i https://jsonplaceholder.typicode.com/posts/9999
+curl -i -X POST https://jsonplaceholder.typicode.com/posts \
+  -H "Content-Type: application/json" \
+  -d '{"title":"projektfeladat","body":"api házivizsga","userId":1}'
+```
+
+Elvárt válasz: az első `200` és `"id": 1`, a második `404` és `{}`, a harmadik `201` és egy generált `id` (pl. `101`). Windows PowerShellben `curl.exe`-t használj, és a parancsot egy sorban írd.
+
 ## Tesztesetek
 
 | Tesztcsomag | Teszteset | Típus | Kérés | Elvárt eredmény | Osztály |
@@ -17,7 +41,6 @@
 | CI push hatására | `.github/workflows/ci.yml` (`push` trigger) |
 | Surefire riport artifactként | `actions/upload-artifact` (`target/surefire-reports/`), hiba esetén is feltöltődik |
 | Kézi indítás | `workflow_dispatch` (GitHub → Actions → *Run workflow*) |
-| Beadás | GitHub repo, BBotlik kollaborátor, a projekt zip-je a HackerRankre |
 
 ## Környezeti követelmények
 
@@ -25,56 +48,32 @@ A projekt tiszta Java + Maven, ezért Linuxon, Windowson és macOS-en is ugyanú
 
 | Eszköz | Verzió | Megjegyzés |
 |---|---|---|
-| JDK | 17 vagy újabb | A projekt `release 17`-re fordít, újabb JDK-val (pl. 21, 27) is fut |
-| Maven | 3.9 vagy újabb | Az IntelliJ és az Eclipse saját beágyazott Mavennel is működik, parancssorhoz külön kell |
+| JDK | 17 vagy újabb | A projekt `release 17`-re fordít, újabb JDK-val is fut |
+| Maven | 3.9 vagy újabb | Az IDE-k beágyazott Mavenje is megfelel, parancssorhoz külön kell |
 | Git | bármely friss verzió | Verziókövetéshez és a GitHub-feltöltéshez |
-| Internetkapcsolat | – | A Maven függőségek letöltéséhez és a `jsonplaceholder.typicode.com` eléréséhez |
-| IDE (opcionális) | IntelliJ IDEA vagy Eclipse | Parancssorból IDE nélkül is futtatható |
+| Internetkapcsolat | – | Maven függőségek és a `jsonplaceholder.typicode.com` eléréséhez |
 
-### macOS (Intel és Apple Silicon)
+Telepítés:
 
 ```bash
-# Homebrew telepítése (ha még nincs): https://brew.sh
-brew install --cask temurin@17     # vagy: brew install openjdk@17
+# macOS (Homebrew)
+brew install --cask temurin@17
 brew install maven git
+
+# Linux (Debian/Ubuntu)
+sudo apt update && sudo apt install -y openjdk-17-jdk maven git
 ```
-
-Ha az `openjdk` Homebrew-csomagot használod, előfordulhat, hogy a `java` nem kerül automatikusan a PATH-ra. Ilyenkor kövesd a `brew info openjdk` kimenetét (symlink vagy `JAVA_HOME` beállítás).
-
-### Linux (Debian/Ubuntu)
-
-```bash
-sudo apt update
-sudo apt install -y openjdk-17-jdk maven git
-```
-
-Fedora/RHEL: `sudo dnf install java-17-openjdk-devel maven git`.
-
-### Windows
-
-PowerShell-ből (winget):
 
 ```powershell
+# Windows (PowerShell, winget)
 winget install EclipseAdoptium.Temurin.17.JDK
 winget install Apache.Maven
 winget install Git.Git
 ```
 
-Ha a `winget` nem elérhető, a telepítők letölthetők kézzel is: [Temurin JDK](https://adoptium.net), [Apache Maven](https://maven.apache.org/download.cgi), [Git](https://git-scm.com). A Maven zip-et kicsomagolás után add hozzá a PATH-hoz, és állítsd be a `JAVA_HOME` környezeti változót a JDK mappájára. Telepítés után nyiss új terminált.
-
-### Telepítés ellenőrzése (minden operációs rendszeren)
-
-```bash
-java -version
-mvn -v
-git --version
-```
-
-A `mvn -v` kimenetében a `Java version` sor a telepített JDK-t mutassa (17 vagy újabb).
+Ellenőrzés: `java -version`, `mvn -v`, `git --version`.
 
 ## Futtatás
-
-### Parancssorból
 
 ```bash
 git clone <repo-url>
@@ -82,26 +81,8 @@ cd api-exam-tests
 mvn clean test
 ```
 
-Sikeres futás végén: `BUILD SUCCESS` és `Tests run: 4, Failures: 0, Errors: 0`. Egyetlen tesztosztály futtatása:
+Sikeres futás végén: `BUILD SUCCESS` és `Tests run: 4, Failures: 0, Errors: 0`. Egy osztály futtatása: `mvn -Dtest=SinglePostTest test`. A Surefire riportok a `target/surefire-reports/` mappában keletkeznek.
 
-```bash
-mvn -Dtest=SinglePostTest test
-```
-
-A Surefire riportok a `target/surefire-reports/` mappában keletkeznek.
-
-### IntelliJ IDEA
-
-1. *File → Open* → a projekt `pom.xml` fájlja → *Open as Project*.
-2. *File → Project Structure → Project → SDK*: JDK 17 vagy újabb (ha nincs, az *Add SDK → Download JDK* letölti).
-3. Jobb klikk a `src/test/java` mappán → *Run 'All Tests'*.
-
-### Eclipse
-
-1. *File → Import → Maven → Existing Maven Projects* → a projekt mappája.
-2. *Project → Properties → Java Build Path*: a JRE legyen 17 vagy újabb. Apple Silicon Macen az aarch64-es Eclipse-et töltsd le.
-3. Jobb klikk a projekten → *Run As → JUnit Test*.
-
-### GitHub Actions (CI)
-
-A workflow a `push`-ra automatikusan lefut Ubuntu környezetben, JDK 17-tel (Temurin). Kézi indítás: *Actions → API Tests CI → Run workflow*. A Surefire riport a futás oldalán, az *Artifacts* szekcióban tölthető le (`surefire-reports`).
+- **IntelliJ IDEA:** *File → Open* → `pom.xml` → *Open as Project*, SDK: JDK 17+, jobb klikk a `src/test/java` mappán → *Run 'All Tests'*.
+- **Eclipse:** *File → Import → Maven → Existing Maven Projects*, majd jobb klikk a projekten → *Run As → JUnit Test*.
+- **GitHub Actions:** push-ra automatikusan fut, kézzel az *Actions → API Tests CI → Run workflow* gombbal. A riport az *Artifacts* szekcióban a `surefire-reports` néven érhető el.
